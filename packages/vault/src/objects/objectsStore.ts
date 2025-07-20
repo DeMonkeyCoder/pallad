@@ -2,35 +2,50 @@ import { produce } from "immer"
 import { type StateCreator, create } from "zustand"
 
 import { matchesQuery } from "../utils/utils"
-import { type ObjectStore, initialObjectState } from "./objectsState"
+import {
+  type ObjectStore,
+  type StoredObject,
+  initialObjectState,
+} from "./objectsState"
 
 export const objectSlice: StateCreator<ObjectStore> = (set, get) => ({
   objects: {},
-  ensureObject: (credentialId) => {
+  ensureObject: (credentialId: string) => {
     set(
       produce((draft) => {
-        draft.objects[credentialId] = draft.objects[credentialId] || {
-          ...(initialObjectState as object),
-          credentialId,
+        if (!draft.objects[credentialId]) {
+          draft.objects[credentialId] = {
+            ...(initialObjectState as any),
+            credentialId,
+          } as any
         }
       }),
     )
   },
-  setObject: ({ credentialId, credential }) => {
-    set((current) =>
-      produce(current, (draft: any) => {
+  setObject: ({
+    credentialId,
+    credential,
+  }: { credentialId: string; credential: any }) => {
+    set(
+      produce((draft) => {
         draft.objects[credentialId] = {
-          ...draft.objects[credentialId],
-          ...(credential as object),
-        }
+          ...(draft.objects[credentialId] as StoredObject),
+          ...credential,
+          credentialId, // Ensure credentialId is always preserved
+        } as any
       }),
     )
   },
-  getObject: (credentialId) => {
+  getObject: (credentialId: string) => {
     const { objects } = get()
-    return objects[credentialId] || initialObjectState
+    return (
+      objects[credentialId] ?? {
+        ...(initialObjectState as StoredObject),
+        credentialId,
+      }
+    )
   },
-  removeObject: (credentialId) => {
+  removeObject: (credentialId: string) => {
     set(
       produce((draft) => {
         delete draft.objects[credentialId]
@@ -39,20 +54,17 @@ export const objectSlice: StateCreator<ObjectStore> = (set, get) => ({
   },
   searchObjects: ({ query, props }) => {
     const { objects } = get()
-    const objectsStatesArray = Object.values(objects)
-    const filteredObjects = objectsStatesArray.filter((object) => {
-      if (!object) {
-        return false
-      }
-      return matchesQuery(object, query)
-    })
+    const objectsStatesArray = Object.values(objects).filter((obj) => !!obj)
+    const filteredObjects = objectsStatesArray.filter((object) =>
+      matchesQuery(object, query),
+    )
     if (props?.length) {
-      const arrayOfArrays = filteredObjects.map((objects: any) => {
-        return props
-          .filter((prop) => objects && prop in objects)
-          .map((prop) => (objects as unknown as Record<string, any>)[prop])
-      })
-      return arrayOfArrays.flat()
+      return filteredObjects.flatMap((object) =>
+        props
+          .filter((prop) => prop in (object as any))
+          // @ts-ignore
+          .map((prop) => object?.[prop]),
+      )
     }
     return filteredObjects
   },
@@ -64,5 +76,4 @@ export const objectSlice: StateCreator<ObjectStore> = (set, get) => ({
     )
   },
 })
-
-export const useObjectVault = create<ObjectStore>(objectSlice)
+export const useObjectVault = create<ObjectStore>()(objectSlice)
