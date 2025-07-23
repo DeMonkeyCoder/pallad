@@ -437,6 +437,7 @@ export const createMinaProvider = async (): Promise<
 
             // Get existing credentials and check for duplicates
             const existingCredentials = await _vault.getPrivateCredential()
+            console.log({ existingCredentials })
             const isDuplicate = existingCredentials.some((existing) => {
               const existingHash = createCredentialHash(existing)
               return existingHash === newCredentialHash
@@ -448,7 +449,9 @@ export const createMinaProvider = async (): Promise<
 
             try {
               const parsedResult = JSON.parse(credentialToStore)
+              console.log({ parsedResult })
               await _vault.storePrivateCredential(parsedResult)
+              console.log("after storePrivateCredential")
               return { success: parsedResult }
             } catch (error: any) {
               throw createProviderRpcError(

@@ -17,6 +17,7 @@ export const objectSlice: StateCreator<ObjectStore> = (set, get) => ({
     )
   },
   setObject: ({ credentialId, credential }) => {
+    console.log({ credentialId, credential })
     set((current) =>
       produce(current, (draft: any) => {
         draft.objects[credentialId] = {
@@ -39,6 +40,7 @@ export const objectSlice: StateCreator<ObjectStore> = (set, get) => ({
   },
   searchObjects: ({ query, props }) => {
     const { objects } = get()
+    console.log({ objects })
     const objectsStatesArray = Object.values(objects)
     const filteredObjects = objectsStatesArray.filter((object) => {
       if (!object) {

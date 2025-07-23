@@ -1,4 +1,4 @@
-import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom"
 
 import dayjs from "dayjs"
 import relativeTime from "dayjs/plugin/relativeTime"
@@ -11,7 +11,6 @@ import { EditAccountRoute } from "./account-management/routes/edit-account"
 import { AddressBookRoute } from "./address-book/routes/address-book"
 import { NewAddressRoute } from "./address-book/routes/new-address"
 import { CredentialDetailsRoute } from "./credentials/routes/credential-details"
-import { CredentialsRoute } from "./credentials/routes/credentials"
 import { ErrorView } from "./error-renderer/views/error"
 import { i18n } from "./lib/i18n"
 import { UnlockWalletRoute } from "./lock/routes/unlock-wallet"
@@ -55,7 +54,7 @@ export const Router = () => {
       <ErrorBoundary FallbackComponent={ErrorView}>
         <div className="flex flex-1 pointer">
           <Toaster theme="dark" />
-          <MemoryRouter>
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<StartRoute />} />
               <Route path="/dashboard" element={<OverviewRoute />} />
@@ -136,12 +135,12 @@ export const Router = () => {
                 <Route path="add" element={<AddAccountRoute />} />
               </Route>
               <Route path="credentials" element={<Outlet />}>
-                <Route path="" element={<CredentialsRoute />} />
+                {/*<Route path="" element={<CredentialsRoute />} />*/}
                 <Route path=":id" element={<CredentialDetailsRoute />} />
               </Route>
               <Route path="/*" element={<NotFoundRoute />} />
             </Routes>
-          </MemoryRouter>
+          </BrowserRouter>
         </div>
       </ErrorBoundary>
     </I18nextProvider>

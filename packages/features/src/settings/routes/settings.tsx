@@ -1,10 +1,10 @@
-import { useAccount } from "@/common/hooks/use-account"
+import { useAccountSettings } from "@/common/hooks/use-account-settings"
 import { useNavigate } from "react-router-dom"
 import { SettingsView } from "../views/settings"
 
 export const SettingsRoute = () => {
   const navigate = useNavigate()
-  const { lockWallet } = useAccount()
+  const { lockWallet } = useAccountSettings()
   const onDonateClicked = () => {
     navigate("/send", {
       state: {
