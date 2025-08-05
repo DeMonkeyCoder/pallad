@@ -5,9 +5,10 @@ import { useLocation } from "react-router-dom"
 
 interface AppLayoutProps {
   children: React.ReactNode
+  className?: string
 }
 
-export const AppLayout = ({ children }: AppLayoutProps) => {
+export const AppLayout = ({ children, className }: AppLayoutProps) => {
   const location = useLocation()
   // biome-ignore lint: dependent just on location
   useEffect(() => {
@@ -17,7 +18,10 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     }
   }, [location])
   return (
-    <div className="flex flex-col flex-1 bg-background" data-testid="appLayout">
+    <div
+      className={`flex flex-col flex-1 bg-background ${className}`}
+      data-testid="appLayout"
+    >
       {children}
     </div>
   )
