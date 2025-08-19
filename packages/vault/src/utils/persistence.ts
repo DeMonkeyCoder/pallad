@@ -1,7 +1,7 @@
 import { Storage } from "@plasmohq/storage"
-import { SecureStorage } from "@plasmohq/storage/secure"
 import superjson from "superjson"
 import type { StateStorage } from "zustand/middleware"
+import { PalladSecureStorage } from "./secure-storage"
 
 superjson.registerCustom<Buffer, number[]>(
   {
@@ -18,7 +18,7 @@ const sessionData = new Storage({
   area: "session",
 })
 
-const secureStorage = new SecureStorage({
+const secureStorage = new PalladSecureStorage({
   area: "local",
 })
 

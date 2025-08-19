@@ -1,0 +1,250 @@
+/**
+ * PalladSecureStorage: A modified version of SecureStorage from PlasmoHQ
+ *[](https://github.com/PlasmoHQ/storage/blob/02c6aeaf631ef71ac939be13a86f4f68fde84447/src/secure.ts).
+ * Modifications include a custom u8ToBase64 function to improve encryption compatibility.
+ * Original code licensed under MIT; modifications adhere to the same license.
+ */
+
+import { BaseStorage } from "@plasmohq/storage"
+
+const { crypto } = globalThis
+
+const u8ToHex = (a: ArrayBufferLike) =>
+  Array.from(new Uint8Array(a), (v) => v.toString(16).padStart(2, "0")).join("")
+
+const u8ToBase64 = (a: ArrayBuffer | Uint8Array) => {
+  const chunkSize = 10000
+  const uint8Array = a instanceof ArrayBuffer ? new Uint8Array(a) : a
+  let str = ""
+  for (let i = 0; i < uint8Array.byteLength; i += chunkSize) {
+    str += String.fromCharCode.apply(null, uint8Array.slice(i, i + chunkSize))
+  }
+  return globalThis.btoa(str)
+}
+
+const base64ToU8 = (base64: string) =>
+  Uint8Array.from(globalThis.atob(base64), (c) => c.charCodeAt(0))
+
+const DEFAULT_ITERATIONS = 147_000
+const DEFAULT_SALT_SIZE = 16
+const DEFAULT_IV_SIZE = 32
+const DEFAULT_NS_SIZE = 8
+
+export const DEFAULT_NS_SEPARATOR = "|:|"
+
+/**
+ * ALPHA API: This API is still in development and may change at any time.
+ */
+export class PalladSecureStorage extends BaseStorage {
+  encoder = new TextEncoder()
+  decoder = new TextDecoder()
+
+  keyFx = "PBKDF2"
+  hashAlgo = "SHA-256"
+  cipherMode = "AES-GCM"
+  cipherSize = 256
+
+  iterations: number
+  saltSize: number
+  ivSize: number
+
+  get prefixSize() {
+    return this.saltSize + this.ivSize
+  }
+
+  private passwordKeyVar: CryptoKey
+  private get passwordKey() {
+    if (!this.passwordKeyVar) {
+      throw new Error("Password not set, please first call setPassword.")
+    }
+    return this.passwordKeyVar
+  }
+
+  setPassword = async (
+    password: string,
+    {
+      iterations = DEFAULT_ITERATIONS,
+      saltSize = DEFAULT_SALT_SIZE,
+      ivSize = DEFAULT_IV_SIZE,
+      namespace = "",
+      nsSize = DEFAULT_NS_SIZE,
+      nsSeparator = DEFAULT_NS_SEPARATOR,
+    } = {},
+  ) => {
+    this.iterations = iterations
+    this.saltSize = saltSize
+    this.ivSize = ivSize
+
+    const passwordBuffer = this.encoder.encode(password)
+    this.passwordKeyVar = await crypto.subtle.importKey(
+      "raw",
+      passwordBuffer,
+      { name: this.keyFx },
+      false, // Not exportable
+      ["deriveKey"],
+    )
+
+    if (!namespace) {
+      const hashBuffer = await crypto.subtle.digest(
+        this.hashAlgo,
+        passwordBuffer,
+      )
+
+      this.keyNamespace = `${u8ToHex(hashBuffer).slice(-nsSize)}${nsSeparator}`
+    } else {
+      this.keyNamespace = `${namespace}${nsSeparator}`
+    }
+  }
+
+  migrate = async (newInstance: PalladSecureStorage) => {
+    const storageMap = await this.getAll()
+    const baseKeyList = Object.keys(storageMap)
+      .filter((k) => this.isValidKey(k))
+      .map((nsKey) => this.getUnnamespacedKey(nsKey))
+
+    await Promise.all(
+      baseKeyList.map(async (key) => {
+        const data = await this.get(key)
+        await newInstance.set(key, data)
+      }),
+    )
+
+    return newInstance
+  }
+
+  /**
+   *
+   * @param boxBase64 A box contains salt, iv and encrypted data
+   * @returns decrypted data
+   */
+  decrypt = async (boxBase64: string) => {
+    const passKey = this.passwordKey
+    const boxBuffer = base64ToU8(boxBase64)
+
+    const salt = boxBuffer.slice(0, this.saltSize)
+    const iv = boxBuffer.slice(this.saltSize, this.prefixSize)
+    const encryptedDataBuffer = boxBuffer.slice(this.prefixSize)
+    const aesKey = await this.deriveKey(salt, passKey, ["decrypt"])
+
+    const decryptedDataBuffer = await crypto.subtle.decrypt(
+      {
+        name: this.cipherMode,
+        iv,
+      },
+      aesKey,
+      encryptedDataBuffer,
+    )
+    return this.decoder.decode(decryptedDataBuffer)
+  }
+
+  encrypt = async (rawData: string) => {
+    const passKey = this.passwordKey
+    const salt = crypto.getRandomValues(new Uint8Array(this.saltSize))
+    const iv = crypto.getRandomValues(new Uint8Array(this.ivSize))
+    const aesKey = await this.deriveKey(salt, passKey, ["encrypt"])
+
+    const encryptedDataBuffer = new Uint8Array(
+      await crypto.subtle.encrypt(
+        {
+          name: this.cipherMode,
+          iv,
+        },
+        aesKey,
+        this.encoder.encode(rawData),
+      ),
+    )
+
+    const boxBuffer = new Uint8Array(
+      this.prefixSize + encryptedDataBuffer.byteLength,
+    )
+
+    boxBuffer.set(salt, 0)
+    boxBuffer.set(iv, this.saltSize)
+    boxBuffer.set(encryptedDataBuffer, this.prefixSize)
+
+    const boxBase64 = u8ToBase64(boxBuffer)
+    return boxBase64
+  }
+
+  get = async <T = string>(key: string) => {
+    const nsKey = this.getNamespacedKey(key)
+    const boxBase64 = await this.rawGet(nsKey)
+    return this.parseValue<T>(boxBase64)
+  }
+
+  getMany = async <T = any>(keys: string[]) => {
+    const nsKeys = keys.map(this.getNamespacedKey)
+    const rawValues = await this.rawGetMany(nsKeys)
+    const parsedValues = await Promise.all(
+      Object.values(rawValues).map(this.parseValue<T>),
+    )
+    return Object.keys(rawValues).reduce(
+      (results, key, i) => {
+        results[this.getUnnamespacedKey(key)] = parsedValues[i]
+        return results
+      },
+      {} as Record<string, T | undefined>,
+    )
+  }
+
+  set = async (key: string, rawValue: any) => {
+    const nsKey = this.getNamespacedKey(key)
+    const value = this.serde.serializer(rawValue)
+    const boxBase64 = await this.encrypt(value)
+    return await this.rawSet(nsKey, boxBase64)
+  }
+
+  setMany = async (items: Record<string, any>) => {
+    const encryptedValues = await Promise.all(
+      Object.values(items).map((rawValue) =>
+        this.encrypt(this.serde.serializer(rawValue)),
+      ),
+    )
+
+    const nsItems = Object.keys(items).reduce((nsItems, key, i) => {
+      nsItems[this.getNamespacedKey(key)] = encryptedValues[i]
+      return nsItems
+    }, {})
+
+    return await this.rawSetMany(nsItems)
+  }
+
+  remove = async (key: string) => {
+    const nsKey = this.getNamespacedKey(key)
+    return await this.rawRemove(nsKey)
+  }
+
+  removeMany = async (keys: string[]) => {
+    const nsKeys = keys.map(this.getNamespacedKey)
+    return await this.rawRemoveMany(nsKeys)
+  }
+
+  protected parseValue = async <T>(boxBase64: string | null | undefined) => {
+    if (boxBase64 !== undefined && boxBase64 !== null) {
+      const rawValue = await this.decrypt(boxBase64)
+      return this.serde.deserializer<T>(rawValue)
+    }
+    return undefined
+  }
+
+  deriveKey = (
+    salt: Uint8Array,
+    passwordKey: CryptoKey,
+    keyUsage: KeyUsage[],
+  ) =>
+    crypto.subtle.deriveKey(
+      {
+        name: this.keyFx,
+        hash: this.hashAlgo,
+        salt,
+        iterations: this.iterations,
+      },
+      passwordKey,
+      {
+        name: this.cipherMode,
+        length: this.cipherSize,
+      },
+      false,
+      keyUsage,
+    )
+}
