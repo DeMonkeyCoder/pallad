@@ -17,6 +17,7 @@ export interface AccountInfo {
   inferredNonce: number
   delegate: string
   publicKey: Mina.PublicKey
+  tokenId: string
 }
 
 export interface AccountInfoProvider extends Provider {

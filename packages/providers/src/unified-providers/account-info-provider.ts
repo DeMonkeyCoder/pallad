@@ -18,19 +18,24 @@ export const createAccountInfoProvider = (
     args: AccountInfoArgs,
   ): Promise<Record<string, AccountInfo>> => {
     // Delegate the call to the underlying provider's getAccountInfo method
-    return (await underlyingProvider.getAccountInfo(args)) as Record<
-      string,
-      AccountInfo
-    >
+    return underlyingProvider.getAccountInfo(args)
+  }
+
+  const getAccountsInfo = async (
+    args: AccountInfoArgs,
+  ): Promise<AccountInfo[]> => {
+    // Delegate the call to the underlying provider's getAccountsInfo method
+    return underlyingProvider.getAccountsInfo(args)
   }
 
   const healthCheck = async (): Promise<HealthCheckResponse> => {
     // Delegate the call to the underlying provider's healthCheck method
-    return await underlyingProvider.healthCheck()
+    return underlyingProvider.healthCheck()
   }
 
   return {
     getAccountInfo,
+    getAccountsInfo,
     healthCheck,
   }
 }

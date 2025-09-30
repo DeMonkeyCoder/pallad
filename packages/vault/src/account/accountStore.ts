@@ -95,6 +95,7 @@ export const accountSlice: StateCreator<AccountStore> = (set, get) => ({
         inferredNonce: 0,
         delegate: "",
         publicKey: "",
+        tokenId: "",
       }
     )
   },

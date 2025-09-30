@@ -6,7 +6,7 @@ import type {
 
 import { createGraphQLRequest } from "../utils/fetch-utils"
 import { healthCheck } from "../utils/health-check-utils"
-import { getTokenAccountInfoQuery } from "./queries"
+import { getAccountsInfoQuery, getTokenAccountInfoQuery } from "./queries"
 
 export const createAccountInfoProvider = (url: string): AccountInfoProvider => {
   const getAccountInfo = async (
@@ -32,6 +32,7 @@ export const createAccountInfoProvider = (url: string): AccountInfoProvider => {
           inferredNonce: 0,
           delegate: "",
           publicKey: args.publicKey,
+          tokenId: "",
         }
       } else {
         accountsInfo[key] = account as AccountInfo
@@ -41,8 +42,24 @@ export const createAccountInfoProvider = (url: string): AccountInfoProvider => {
     return accountsInfo
   }
 
+  const getAccountsInfo = async (
+    args: AccountInfoArgs,
+  ): Promise<AccountInfo[]> => {
+    const variables = { publicKey: args.publicKey }
+    const query = getAccountsInfoQuery
+    const fetchGraphQL = createGraphQLRequest(url)
+    const result = await fetchGraphQL(query, variables)
+
+    if (!result.ok) {
+      throw new Error(result.message)
+    }
+
+    return result.data
+  }
+
   return {
     healthCheck: () => healthCheck(url),
+    getAccountsInfo,
     getAccountInfo,
   }
 }

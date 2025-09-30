@@ -19,6 +19,7 @@ export interface AccountInfo {
   inferredNonce: number
   delegate?: string
   publicKey: Mina.PublicKey | Address
+  tokenId: string
 }
 
 export interface AccountInfoProvider extends Provider {
@@ -31,4 +32,12 @@ export interface AccountInfoProvider extends Provider {
   getAccountInfo: (
     args: AccountInfoArgs,
   ) => Promise<Record<string, AccountInfo>>
+
+  /**
+   * Gets the account balance and information based for all accounts of a public key.
+   *
+   * @param {Mina.PublicKey | Address} publicKey - Public Key of the account
+   * @returns {AccountInfo[]} - An array of balance and account information
+   */
+  getAccountsInfo: (args: AccountInfoArgs) => Promise<AccountInfo[]>
 }

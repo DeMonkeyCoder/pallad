@@ -14,6 +14,22 @@ export const getAccountBalance = `
       inferredNonce
       delegate
       publicKey
+      tokenId
+    }
+  }
+`
+
+export const getAccountsInfoQuery = `
+  query accountBalance($publicKey: PublicKey!) {
+    accounts(publicKey: $publicKey) {
+      balance {
+        total
+      },
+      nonce
+      inferredNonce
+      delegate
+      publicKey
+      tokenId
     }
   }
 `
