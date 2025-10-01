@@ -5,6 +5,7 @@ import type {
 } from "./chain-history-provider"
 import type { NodeStatus } from "./node-status-provider"
 import type { HealthCheckResponse } from "./provider"
+import type { TokenInfo, TokenInfoArgs } from "./token-info-provider"
 import type { TxStatus, TxStatusArgs } from "./tx-status-provider"
 import type { Tx } from "./types"
 
@@ -21,7 +22,10 @@ export interface UnifiedChainProviderType {
   getAccountInfo(
     args: AccountInfoArgs,
   ): Promise<Record<string, AccountInfo> | undefined>
+  getAccountsInfo(args: AccountInfoArgs): Promise<AccountInfo[]>
   getTransactionStatus?(args: TxStatusArgs): Promise<TxStatus | undefined>
+
+  getTokenInfo(args: TokenInfoArgs): Promise<Record<string, TokenInfo>>
 
   // Methods related to ProviderArchive
   getTransactions(args: TransactionsByAddressesArgs): Promise<Tx[] | undefined>

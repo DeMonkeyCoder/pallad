@@ -46,7 +46,7 @@ export function getTokenAccountInfoQuery(tokenIds: TokenIdMap): string {
 
   // Add the fragment definition
   queryString +=
-    "}\n\nfragment AccountFields on Account {\n  balance {\n    total\n  }\n  tokenSymbol\n  tokenId\n  nonce\n  inferredNonce\n  publicKey\n  delegate\n}"
+    "}\n\nfragment AccountFields on Account {\n  balance {\n    total\n  }\n  tokenId\n  nonce\n  inferredNonce\n  publicKey\n  delegate\n}"
 
   return queryString
 }

@@ -1,42 +1,46 @@
 import type {
-  AccountInfo,
   AccountInfoArgs,
   HealthCheckResponse,
+  TokenInfoArgs,
   TransactionsByAddressesArgs,
-  Tx,
   UnifiedChainProviderType,
 } from "@palladco/pallad-core"
 
 import { createAccountInfoProvider } from "./account-info-provider"
 import { createChainHistoryProvider } from "./chain-history-provider"
 import { createNodeStatusProvider } from "./node-status-provider"
+import { createTokenInfoProvider } from "./token-info-provider"
 import type { ProviderConfig } from "./types"
 
 export const createChainProvider = (
   config: ProviderConfig,
 ): UnifiedChainProviderType => {
   const getAccountInfo = async (args: AccountInfoArgs) => {
-    return (await createAccountInfoProvider(config).getAccountInfo(
-      args,
-    )) as Record<string, AccountInfo>
+    return createAccountInfoProvider(config).getAccountInfo(args)
+  }
+
+  const getAccountsInfo = async (args: AccountInfoArgs) => {
+    return createAccountInfoProvider(config).getAccountsInfo(args)
+  }
+
+  const getTokenInfo = async (args: TokenInfoArgs) => {
+    return createTokenInfoProvider(config).getTokenInfo(args)
   }
 
   const getTransactions = async (args: TransactionsByAddressesArgs) => {
-    return (await createChainHistoryProvider(config).transactionsByAddresses(
-      args,
-    )) as Tx[]
+    return createChainHistoryProvider(config).transactionsByAddresses(args)
   }
 
   const getNodeStatus = async () => {
-    return await createNodeStatusProvider(config).getNodeStatus()
+    return createNodeStatusProvider(config).getNodeStatus()
   }
 
   const healthCheckNode = async () => {
-    return await createAccountInfoProvider(config).healthCheck()
+    return createAccountInfoProvider(config).healthCheck()
   }
 
   const healthCheckArchive = async () => {
-    return await createChainHistoryProvider(config).healthCheck()
+    return createChainHistoryProvider(config).healthCheck()
   }
 
   const healthCheck = async () => {
@@ -60,6 +64,8 @@ export const createChainProvider = (
 
   return {
     getAccountInfo,
+    getAccountsInfo,
+    getTokenInfo,
     getTransactions,
     getNodeStatus,
     healthCheck,

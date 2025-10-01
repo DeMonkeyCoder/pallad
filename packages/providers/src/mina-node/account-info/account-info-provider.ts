@@ -54,7 +54,7 @@ export const createAccountInfoProvider = (url: string): AccountInfoProvider => {
       throw new Error(result.message)
     }
 
-    return result.data
+    return result.data.accounts
   }
 
   return {

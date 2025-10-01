@@ -7,6 +7,7 @@ import type {
 } from "./chain-history-provider"
 import type { DaemonStatus } from "./daemon-status-provider"
 import type { HealthCheckResponse } from "./provider"
+import type { TokenInfo, TokenInfoArgs } from "./token-info-provider"
 import type { TxStatus, TxStatusArgs } from "./tx-status-provider"
 import type { SubmitTxArgs, SubmitTxResult } from "./tx-submit-provider"
 
@@ -25,6 +26,8 @@ export interface UnifiedMinaProviderType {
   ): Promise<Record<string, AccountInfo> | undefined>
   getTransactionStatus?(args: TxStatusArgs): Promise<TxStatus | undefined>
   submitTransaction(args: SubmitTxArgs): Promise<SubmitTxResult | undefined>
+
+  getTokenInfo(args: TokenInfoArgs): Promise<Record<string, TokenInfo>>
 
   // Methods related to ProviderArchive
   getTransactions(

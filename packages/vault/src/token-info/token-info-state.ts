@@ -15,6 +15,7 @@ export type TokenInfoState = {
 export type TokenInfoActions = {
   setTokenInfo: (networkId: string, tokenInfo: TokenInfo) => void
   getTokenInfo: (networkId: string, ticker: string) => TokenInfo | undefined
+  setTokensInfo: (networkId: string, tokensInfo: Record<string, string>) => void
   getTokensInfo: (networkId: string) => Record<string, string>
   removeTokenInfo: (networkId: string, ticker: string) => void
   clearTokenInfo: () => void

@@ -10,7 +10,14 @@ export const tokenInfoSlice: StateCreator<TokenInfoStore> = (set, get) => ({
     const { ticker, tokenId } = tokenInfo
     set(
       produce((state) => {
-        state.tokenInfo[networkId][ticker] = tokenId
+        state.tokenInfoV2[networkId][ticker] = tokenId
+      }),
+    )
+  },
+  setTokensInfo: (networkId, tokensInfo: Record<string, string>) => {
+    set(
+      produce((state) => {
+        state.tokenInfoV2[networkId] = tokensInfo
       }),
     )
   },
@@ -26,14 +33,14 @@ export const tokenInfoSlice: StateCreator<TokenInfoStore> = (set, get) => ({
   removeTokenInfo: (networkId, ticker) => {
     set(
       produce((state) => {
-        delete state.tokenInfo[networkId][ticker]
+        delete state.tokenInfoV2[networkId][ticker]
       }),
     )
   },
   clearTokenInfo: () => {
     set(
       produce((state) => {
-        state.tokenInfo = DEFAULT_TOKEN_INFO
+        state.tokenInfoV2 = DEFAULT_TOKEN_INFO
       }),
     )
   },
