@@ -64,6 +64,13 @@ export type Account = {
   }
 }
 
+export type AccountToken = {
+  tokenSymbol: string
+  balance: {
+    total: bigint
+  }
+}
+
 export type Contact = {
   name: string
   address: string

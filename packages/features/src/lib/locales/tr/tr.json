@@ -129,6 +129,8 @@
     "detailsGetStarted": "İşlemlerinizle ilgili ayrıntıları burada bulabilirsiniz. Başlamak için cüzdanınıza para yatırın!"
   },
   "wallet": {
+    "assets": "Varlıklar",
+    "tokens": "Tokenlar",
     "openBeta": "Açık Beta sürümü",
     "onlyWorksForDevnet": "Yalnızca Mainnet lansmanından önceki Devnet için çalışır",
     "available": "Kullanılabilir",

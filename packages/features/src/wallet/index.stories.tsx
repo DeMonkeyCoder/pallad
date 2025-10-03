@@ -9,6 +9,7 @@ export const Dashboard = () => {
     <OverviewView
       lastMonthPrices={[]}
       chartLabel="test"
+      minaDailyPriceDiffText="test"
       loading={false}
       currentPriceIndex={undefined}
       setCurrentPriceIndex={action("Set Current Price Index")}
@@ -20,6 +21,9 @@ export const Dashboard = () => {
       minaBalance={200}
       setUseFiatBalance={action("Set Use Fiat Balance")}
       useFiatBalance={true}
+      setIsAssetsView={action("Set Is Assets View")}
+      isAssetsView={false}
+      tokens={[]}
     />
   )
 }

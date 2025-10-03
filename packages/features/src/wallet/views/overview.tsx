@@ -1,7 +1,9 @@
 import ArrowRightIcon from "@/common/assets/arrow-right.svg?react"
+import type { AccountToken } from "@/common/types.ts"
 import { AppLayout } from "@/components/app-layout"
 import { MenuBar } from "@/components/menu-bar"
 import { Skeleton } from "@/components/skeleton"
+import { formatMina } from "@mina-js/utils"
 import type { Tx } from "@palladco/pallad-core"
 import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
@@ -23,6 +25,10 @@ type OverviewViewProps = {
   onReceive: () => void
   useFiatBalance: boolean
   setUseFiatBalance: (useFiatBalance: boolean) => void
+  isAssetsView: boolean
+  setIsAssetsView: (isAssetsView: boolean) => void
+  tokens: AccountToken[] | undefined
+  minaDailyPriceDiffText: string
 }
 
 export const OverviewView = ({
@@ -39,6 +45,10 @@ export const OverviewView = ({
   onReceive,
   useFiatBalance,
   setUseFiatBalance,
+  isAssetsView,
+  setIsAssetsView,
+  tokens,
+  minaDailyPriceDiffText,
 }: OverviewViewProps) => {
   const [bucks, cents] = (useFiatBalance ? fiatBalance : minaBalance)
     .toFixed(2)
@@ -102,34 +112,94 @@ export const OverviewView = ({
         </div>
       </div>
       <div className="flex flex-col px-8 py-4 gap-3 pb-16">
-        <div className="flex justify-between items-end">
-          <div className="flex flex-col gap-1">
-            <p className="text-mint">{t("wallet.recent")}</p>
-            <h2 className="text-xl">{t("wallet.transactions")}</h2>
-          </div>
-          <Link to="/transactions" className="flex items-center mb-[2px]">
-            <span>{t("wallet.seeAll")}</span>
-            <ArrowRightIcon />
-          </Link>
+        <div className="p-1 flex bg-secondary rounded-full gap-4">
+          <button
+            type="button"
+            className={`flex-1 btn ${isAssetsView ? "bg-neutral" : "btn-secondary"}`}
+            onClick={() => setIsAssetsView(true)}
+            data-testid="dashboard/assets"
+          >
+            {t("wallet.assets")}
+          </button>
+          <button
+            type="button"
+            className={`flex-1 btn ${isAssetsView ? "btn-secondary" : "bg-neutral"}`}
+            onClick={() => setIsAssetsView(false)}
+            data-testid="dashboard/recent"
+          >
+            {t("wallet.recent")}
+          </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {loading ? (
-            <>
-              <Skeleton loading={true} h="145px" />
-              <Skeleton loading={true} h="145px" />
-            </>
-          ) : transactions.length > 0 ? (
-            transactions.map((tx) => (
-              <TxTile
-                key={tx.hash}
-                tx={tx}
-                currentWalletAddress={publicAddress}
-              />
-            ))
-          ) : (
-            <p className="col-span-2">{t("wallet.noTransactionsYet")}</p>
-          )}
-        </div>
+        {isAssetsView ? (
+          <>
+            <h2 className="text-xl">{t("wallet.tokens")}</h2>
+            <div className="flex flex-col space-y-4">
+              {tokens === undefined ? (
+                <>
+                  <Skeleton loading={true} h="70px" />
+                  <Skeleton loading={true} h="70px" />
+                </>
+              ) : (
+                tokens.map((token) => (
+                  <div
+                    key={token.tokenSymbol}
+                    className="flex justify-between py-2"
+                  >
+                    <div className="flex space-x-4">
+                      <div className="w-12 h-12 flex items-center justify-center bg-base-100 rounded-full">
+                        {token.tokenSymbol[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <p>{token.tokenSymbol}</p>
+                        <p className="text-[#7D7A9C]">
+                          {token.tokenSymbol === "MINA"
+                            ? minaDailyPriceDiffText
+                            : "-"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p>{formatMina(token.balance.total)}</p>
+                      <p className="text-[#7D7A9C]">
+                        {token.tokenSymbol === "MINA"
+                          ? `$${fiatBalance.toFixed(2)}`
+                          : "-"}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-between items-end">
+              <h2 className="text-xl">{t("wallet.transactions")}</h2>
+              <Link to="/transactions" className="flex items-center mb-[2px]">
+                <span>{t("wallet.seeAll")}</span>
+                <ArrowRightIcon />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {loading ? (
+                <>
+                  <Skeleton loading={true} h="145px" />
+                  <Skeleton loading={true} h="145px" />
+                </>
+              ) : transactions.length > 0 ? (
+                transactions.map((tx) => (
+                  <TxTile
+                    key={tx.hash}
+                    tx={tx}
+                    currentWalletAddress={publicAddress}
+                  />
+                ))
+              ) : (
+                <p className="col-span-2">{t("wallet.noTransactionsYet")}</p>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </AppLayout>
   )

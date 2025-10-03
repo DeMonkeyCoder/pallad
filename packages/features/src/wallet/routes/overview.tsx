@@ -42,12 +42,14 @@ export const OverviewRoute = () => {
   const dailyPriceDiffMina = (
     Number(dailyPriceDiffFiat) / (minaPrice ?? 1)
   ).toFixed(2)
+  const minaDailyPriceDiffText = `${dailyPriceDiff >= 0 ? "+" : ""}${
+    useFiatBalance ? dailyPriceDiffFiat : dailyPriceDiffMina
+  }`
   const chartLabel =
     typeof currentPriceIndex === "undefined"
-      ? `${dailyPriceDiff >= 0 ? "+" : ""}${
-          useFiatBalance ? dailyPriceDiffFiat : dailyPriceDiffMina
-        } (24h)`
+      ? `${minaDailyPriceDiffText} (24h)`
       : dayjs(lastMonthPrices[currentPriceIndex]?.[0]).format("MMM D")
+  const [isAssetsView, setIsAssetsView] = useState(true)
   return (
     <OverviewView
       lastMonthPrices={lastMonthPrices}
@@ -63,6 +65,10 @@ export const OverviewRoute = () => {
       onReceive={() => navigate("/receive")}
       useFiatBalance={useFiatBalance}
       setUseFiatBalance={setUseFiatBalance}
+      isAssetsView={isAssetsView}
+      setIsAssetsView={setIsAssetsView}
+      tokens={account.tokens}
+      minaDailyPriceDiffText={minaDailyPriceDiffText}
     />
   )
 }

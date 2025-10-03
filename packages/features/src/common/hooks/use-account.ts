@@ -1,3 +1,5 @@
+import type { AccountToken } from "@/common/types.ts"
+import { formatMina } from "@mina-js/utils"
 import { Network, getAccountProperties } from "@palladco/pallad-core"
 import { sessionPersistence } from "@palladco/vault"
 import { getPublicKey, isDelegated, useVault } from "@palladco/vault"
@@ -20,13 +22,16 @@ export const useAccount = () => {
   )
   const fetchWallet = async () => {
     await _syncWallet()
-    const accountInfo = getAccountsInfo(currentNetworkId, publicKey)
+    const accountsInfo = getAccountsInfo(
+      currentNetworkId,
+      publicKey,
+    ).accountInfo
     const chain = currentWallet.credential.credential?.chain
-    const props = getAccountProperties(
-      accountInfo.accountInfo,
-      chain ?? Network.Mina,
-    )
-    return props
+    const props = getAccountProperties(accountsInfo, chain ?? Network.Mina)
+    return {
+      ...props,
+      accountsInfo,
+    }
   }
   const publicKey = getPublicKey(currentWallet)
   const swr = useSWR(
@@ -36,9 +41,27 @@ export const useAccount = () => {
       refreshInterval: 30000,
     },
   )
-  const rawBalance = swr.isLoading ? 0 : (swr.data?.balance ?? 0)
-  const minaBalance =
-    rawBalance && Number.parseInt(String(rawBalance)) / 1_000_000_000
+  const rawBalance = useMemo(
+    () => (swr.isLoading ? 0 : (swr.data?.balance ?? 0)),
+    [swr],
+  )
+  const minaBalance = useMemo(
+    () => rawBalance && formatMina(BigInt(rawBalance)),
+    [rawBalance],
+  )
+  const tokens: AccountToken[] | undefined = useMemo(() => {
+    if (!swr.isLoading) {
+      const accountsInfo = swr.data?.accountsInfo
+      if (accountsInfo) {
+        return Object.keys(accountsInfo).map((tokenSymbol) => ({
+          tokenSymbol,
+          balance: {
+            total: BigInt(accountsInfo[tokenSymbol].balance.total),
+          },
+        }))
+      }
+    }
+  }, [swr])
   const gradientBackground = useMemo(
     () =>
       publicKey &&
@@ -67,6 +90,7 @@ export const useAccount = () => {
     ...swr,
     fetchWallet,
     minaBalance,
+    tokens,
     gradientBackground,
     copyWalletAddress,
     currentWallet,

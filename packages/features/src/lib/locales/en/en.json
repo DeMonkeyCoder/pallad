@@ -129,6 +129,8 @@
     "detailsGetStarted": "Here you'll find details about your transactions. Fund your wallet to get started!"
   },
   "wallet": {
+    "assets": "Assets",
+    "tokens": "Tokens",
     "openBeta": "Open Beta version",
     "onlyWorksForDevnet": "Only works for Devnet before Mainnet launch",
     "available": "Available",
